@@ -12,6 +12,9 @@ export default function Header() {
           <span className="text-lg font-bold tracking-tight text-white">
             GYSOM
           </span>
+          <span className="hidden text-xs text-gray-500 sm:inline">
+            Get Your Skates On, Mate
+          </span>
         </Link>
 
         <nav className="flex items-center gap-4">

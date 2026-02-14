@@ -12,22 +12,22 @@ const FEATURES = [
   {
     icon: Zap,
     title: "6-Stage Pipeline",
-    description: "Intent extraction, dependency analysis, agent assignment, decision batching, prompt generation, execution planning.",
+    description: "From vague idea to execution plan in seconds. Intent, dependencies, agents, decisions, prompts, and orchestration — done.",
   },
   {
     icon: GitBranch,
-    title: "DAG Visualization",
-    description: "Interactive dependency graph showing parallel workstreams and critical path analysis.",
+    title: "Parallel DAG",
+    description: "No more sequential todo lists. Your tasks are mapped into a dependency graph that maximises what runs in parallel.",
   },
   {
     icon: Users,
-    title: "Agent-First",
-    description: "Every output is optimized for autonomous agent execution, not human reading.",
+    title: "Agent-First Output",
+    description: "Every prompt is built for agents to execute autonomously. Humans make decisions upfront, then get out of the way.",
   },
   {
     icon: FileText,
-    title: "Ready-to-Execute",
-    description: "Copy-paste CLAUDE.md, AGENTS.md, and per-agent prompts directly into your toolchain.",
+    title: "Copy, Paste, Ship",
+    description: "CLAUDE.md, AGENTS.md, and per-agent prompts — ready to drop straight into Claude Code, Codex, or your own toolchain.",
   },
 ];
 
@@ -60,15 +60,18 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-4 pt-16 pb-12 text-center">
+          <p className="mb-3 text-sm font-medium uppercase tracking-widest text-blue-500">
+            Get your skates on, mate
+          </p>
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Compile your project into an
+            Describe your project.
             <br />
-            <span className="text-blue-500">agent-first execution plan</span>
+            <span className="text-blue-500">Get an agent-ready execution plan.</span>
           </h1>
           <p className="mx-auto mb-12 max-w-2xl text-lg text-gray-400">
-            Describe your project in natural language. GYSOM transforms it into a
-            DAG-based orchestration plan with agent roles, execution prompts, and
-            parallel workstreams.
+            Stop writing sequential task lists no agent can run. GYSOM compiles your
+            idea into a parallel DAG, assigns agent roles, batches human decisions
+            upfront, and hands you copy-paste prompts. Ship faster.
           </p>
 
           {/* Input form */}

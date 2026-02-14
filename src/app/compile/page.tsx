@@ -74,7 +74,7 @@ export default function CompilePage() {
           className="mb-6 flex items-center gap-1 text-sm text-gray-400 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to input
+          New project
         </button>
 
         {/* Compilation in progress */}
@@ -83,8 +83,11 @@ export default function CompilePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Spinner size="sm" />
-                <CardTitle>Compiling...</CardTitle>
+                <CardTitle>Lacing up — hang tight</CardTitle>
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Six stages, no dawdling. Your execution plan is being compiled right now.
+              </p>
             </CardHeader>
             <CompilationProgress
               stages={stages}
@@ -96,13 +99,14 @@ export default function CompilePage() {
         {/* Error */}
         {error && !isCompiling && (
           <Card className="mb-8 border-red-800">
-            <div className="text-center">
-              <p className="mb-4 text-red-400">{error}</p>
+            <div className="text-center py-4">
+              <p className="mb-1 text-sm font-medium text-red-400">Wiped out on the ice</p>
+              <p className="mb-4 text-xs text-gray-500">{error}</p>
               <Button
                 variant="secondary"
                 onClick={() => router.push("/")}
               >
-                Try again
+                Lace up and try again
               </Button>
             </div>
           </Card>
@@ -126,7 +130,7 @@ export default function CompilePage() {
                 onClick={() => downloadAllExports(result)}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Export All
+                Grab Everything
               </Button>
             </div>
 

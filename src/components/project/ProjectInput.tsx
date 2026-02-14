@@ -51,13 +51,13 @@ export default function ProjectInput({ onSubmit, isLoading }: ProjectInputProps)
           htmlFor="description"
           className="mb-2 block text-sm font-medium text-gray-300"
         >
-          Describe your project
+          What are you building?
         </label>
         <textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Build a real-time collaboration app with video chat, shared whiteboard, and project management features. Use React, Node.js, and PostgreSQL. Support 100 concurrent users per room..."
+          placeholder="e.g. Build a real-time collaboration app with video chat, shared whiteboard, and project management. React + Node.js + PostgreSQL, 100 concurrent users per room. Ship it in 3 weeks..."
           maxLength={MAX_INPUT_LENGTH}
           rows={6}
           className="w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-100 placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -133,7 +133,7 @@ export default function ProjectInput({ onSubmit, isLoading }: ProjectInputProps)
         className="w-full"
       >
         <Send className="mr-2 h-4 w-4" />
-        Compile Execution Plan
+        Get your skates on
       </Button>
     </form>
   );
