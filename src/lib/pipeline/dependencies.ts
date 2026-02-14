@@ -11,7 +11,7 @@ import type {
   PipelineStageName,
 } from "@/lib/types";
 import { GysomAIClient } from "@/lib/ai/client";
-import { extractJSON, safeParseJSON } from "@/lib/utils/formatting";
+import { extractJSON, safeParseJSON, repairTruncatedJSON } from "@/lib/utils/formatting";
 
 const STAGE: PipelineStageName = "dependency-analysis";
 
@@ -35,7 +35,13 @@ export async function analyzeDependencies(
   const result = await client.runStage(STAGE, userMessage, modelTier);
 
   const jsonStr = extractJSON(result.text);
-  const dag = safeParseJSON<DAG>(jsonStr);
+  let dag = safeParseJSON<DAG>(jsonStr);
+
+  // If initial parse fails, try repairing truncated JSON
+  if (!dag) {
+    const repaired = repairTruncatedJSON(jsonStr);
+    dag = safeParseJSON<DAG>(repaired);
+  }
 
   if (!dag) {
     throw new Error(

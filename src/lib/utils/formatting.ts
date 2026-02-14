@@ -54,13 +54,78 @@ export function safeParseJSON<T>(text: string): T | null {
 
 /** Extract JSON from a string that may contain markdown fences or surrounding text */
 export function extractJSON(text: string): string {
-  // Try to find JSON within markdown code fences
+  // Try to find JSON within markdown code fences (greedy to capture full content)
   const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-  if (fenceMatch) return fenceMatch[1].trim();
+  if (fenceMatch) {
+    const inner = fenceMatch[1].trim();
+    // Verify it looks like JSON before returning
+    if (inner.startsWith("{") || inner.startsWith("[")) return inner;
+  }
 
-  // Try to find the first { ... } or [ ... ] block
+  // If fences exist but no closing fence (truncated response), extract content after opening fence
+  const openFenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]+)/);
+  if (openFenceMatch) {
+    const inner = openFenceMatch[1].trim();
+    if (inner.startsWith("{") || inner.startsWith("[")) return inner;
+  }
+
+  // Try to find the first { ... } or [ ... ] block (greedy — capture the largest block)
   const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
   if (jsonMatch) return jsonMatch[1].trim();
 
+  // Last resort: find start of JSON even if not closed (truncated)
+  const partialMatch = text.match(/(\{[\s\S]*|\[[\s\S]*)/);
+  if (partialMatch) return partialMatch[1].trim();
+
   return text.trim();
+}
+
+/** Attempt to repair truncated JSON by closing open brackets/braces */
+export function repairTruncatedJSON(text: string): string {
+  let str = text.trim();
+
+  // Remove trailing comma if present
+  str = str.replace(/,\s*$/, "");
+
+  // Count open/close brackets and braces
+  let braces = 0;
+  let brackets = 0;
+  let inString = false;
+  let escape = false;
+
+  for (const char of str) {
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (char === "\\") {
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (char === "{") braces++;
+    else if (char === "}") braces--;
+    else if (char === "[") brackets++;
+    else if (char === "]") brackets--;
+  }
+
+  // If we're inside a string, close it
+  if (inString) str += '"';
+
+  // Close open brackets and braces
+  while (brackets > 0) {
+    str += "]";
+    brackets--;
+  }
+  while (braces > 0) {
+    str += "}";
+    braces--;
+  }
+
+  return str;
 }

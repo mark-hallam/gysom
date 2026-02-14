@@ -12,7 +12,7 @@ import type {
   PipelineStageName,
 } from "@/lib/types";
 import { GysomAIClient } from "@/lib/ai/client";
-import { extractJSON, safeParseJSON } from "@/lib/utils/formatting";
+import { extractJSON, safeParseJSON, repairTruncatedJSON } from "@/lib/utils/formatting";
 import { getTemplateForType } from "@/lib/templates";
 
 const STAGE: PipelineStageName = "agent-assignment";
@@ -45,10 +45,19 @@ export async function assignAgents(
   const result = await client.runStage(STAGE, userMessage, modelTier);
 
   const jsonStr = extractJSON(result.text);
-  const parsed = safeParseJSON<{
+  let parsed = safeParseJSON<{
     agents: AgentRole[];
     assignments: AgentAssignment[];
   }>(jsonStr);
+
+  // If initial parse fails, try repairing truncated JSON
+  if (!parsed) {
+    const repaired = repairTruncatedJSON(jsonStr);
+    parsed = safeParseJSON<{
+      agents: AgentRole[];
+      assignments: AgentAssignment[];
+    }>(repaired);
+  }
 
   if (!parsed || !parsed.agents || !Array.isArray(parsed.agents)) {
     throw new Error(

@@ -16,7 +16,7 @@ import type {
   PipelineStageName,
 } from "@/lib/types";
 import { GysomAIClient } from "@/lib/ai/client";
-import { extractJSON, safeParseJSON } from "@/lib/utils/formatting";
+import { extractJSON, safeParseJSON, repairTruncatedJSON } from "@/lib/utils/formatting";
 import { renderTemplate, getTemplateForType } from "@/lib/templates";
 
 const STAGE: PipelineStageName = "execution-plan";
@@ -74,7 +74,13 @@ export async function assembleExecutionPlan(
   const result = await client.runStage(STAGE, userMessage, modelTier);
 
   const jsonStr = extractJSON(result.text);
-  const parsed = safeParseJSON<Stage6Output>(jsonStr);
+  let parsed = safeParseJSON<Stage6Output>(jsonStr);
+
+  // If initial parse fails, try repairing truncated JSON
+  if (!parsed) {
+    const repaired = repairTruncatedJSON(jsonStr);
+    parsed = safeParseJSON<Stage6Output>(repaired);
+  }
 
   // Use template-rendered versions if Claude's output is incomplete
   const template = getTemplateForType(manifest.projectType);

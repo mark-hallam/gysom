@@ -5,7 +5,7 @@
 
 import type { ProjectManifest, ModelTier, PipelineStageName } from "@/lib/types";
 import { GysomAIClient } from "@/lib/ai/client";
-import { extractJSON, safeParseJSON } from "@/lib/utils/formatting";
+import { extractJSON, safeParseJSON, repairTruncatedJSON } from "@/lib/utils/formatting";
 
 const STAGE: PipelineStageName = "intent-extraction";
 
@@ -29,7 +29,13 @@ export async function extractIntent(
   const result = await client.runStage(STAGE, userMessage, modelTier);
 
   const jsonStr = extractJSON(result.text);
-  const manifest = safeParseJSON<ProjectManifest>(jsonStr);
+  let manifest = safeParseJSON<ProjectManifest>(jsonStr);
+
+  // If initial parse fails, try repairing truncated JSON
+  if (!manifest) {
+    const repaired = repairTruncatedJSON(jsonStr);
+    manifest = safeParseJSON<ProjectManifest>(repaired);
+  }
 
   if (!manifest) {
     throw new Error(

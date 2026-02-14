@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/common/Header";
 import CompilationProgress from "@/components/pipeline/CompilationProgress";
@@ -41,9 +41,12 @@ export default function CompilePage() {
   } = useCompilation();
 
   const [activeTab, setActiveTab] = useState<TabId>("dag");
+  const hasStarted = useRef(false);
 
   // Start compilation on mount if we have a request in sessionStorage
   useEffect(() => {
+    if (hasStarted.current) return;
+
     const stored = sessionStorage.getItem("gysom_compile_request");
     if (!stored) {
       router.push("/");
@@ -57,6 +60,7 @@ export default function CompilePage() {
     }>(stored);
 
     if (data) {
+      hasStarted.current = true;
       sessionStorage.removeItem("gysom_compile_request");
       startCompilation(data);
     }

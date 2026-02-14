@@ -1,12 +1,13 @@
 /**
  * Claude API client with model routing and streaming support.
+ * All API calls use streaming internally to avoid Anthropic's timeout on long requests.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { ModelTier, PipelineStageName } from "@/lib/types";
 import { selectModelForStage } from "./models";
 import { SYSTEM_PROMPTS } from "./prompts";
-import { MAX_OUTPUT_TOKENS_PER_STAGE } from "@/lib/constants";
+import { MAX_OUTPUT_TOKENS_PER_STAGE, STAGE_OUTPUT_TOKEN_LIMITS } from "@/lib/constants";
 
 interface ClientOptions {
   apiKey?: string;
@@ -24,6 +25,11 @@ interface MessageResult {
   outputTokens: number;
 }
 
+/** Get the max output tokens for a given stage */
+function getMaxTokensForStage(stage: PipelineStageName): number {
+  return STAGE_OUTPUT_TOKEN_LIMITS[stage] || MAX_OUTPUT_TOKENS_PER_STAGE;
+}
+
 export class GysomAIClient {
   private client: Anthropic;
   private defaultTier: ModelTier;
@@ -33,6 +39,7 @@ export class GysomAIClient {
   constructor(options: ClientOptions = {}) {
     this.client = new Anthropic({
       apiKey: options.apiKey || process.env.ANTHROPIC_API_KEY,
+      timeout: 5 * 60 * 1000, // 5 minutes per API call
     });
     this.defaultTier = options.defaultTier || "opus45";
   }
@@ -40,6 +47,7 @@ export class GysomAIClient {
   /**
    * Send a message to Claude for a specific pipeline stage.
    * Automatically routes to the correct model based on stage and user tier.
+   * Always uses streaming internally to avoid Anthropic API timeouts.
    */
   async runStage(
     stage: PipelineStageName,
@@ -50,42 +58,21 @@ export class GysomAIClient {
     const tier = tierOverride || this.defaultTier;
     const model = selectModelForStage(stage, tier);
     const systemPrompt = SYSTEM_PROMPTS[stage];
+    const maxTokens = getMaxTokensForStage(stage);
 
-    if (stream?.onChunk) {
-      return this.streamMessage(model, systemPrompt, userMessage, stream);
-    }
-    return this.sendMessage(model, systemPrompt, userMessage);
+    // Always use streaming to avoid Anthropic API timeout on long requests
+    return this.streamMessage(model, systemPrompt, userMessage, maxTokens, stream || {});
   }
 
-  /** Non-streaming message */
-  private async sendMessage(
-    model: string,
-    system: string,
-    userMessage: string
-  ): Promise<MessageResult> {
-    const response = await this.client.messages.create({
-      model,
-      max_tokens: MAX_OUTPUT_TOKENS_PER_STAGE,
-      system,
-      messages: [{ role: "user", content: userMessage }],
-    });
-
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
-    const inputTokens = response.usage.input_tokens;
-    const outputTokens = response.usage.output_tokens;
-
-    this.cumulativeInputTokens += inputTokens;
-    this.cumulativeOutputTokens += outputTokens;
-
-    return { text, inputTokens, outputTokens };
-  }
-
-  /** Streaming message */
+  /**
+   * Streaming message — used for ALL API calls.
+   * When no callbacks are provided, collects the full response silently.
+   */
   private async streamMessage(
     model: string,
     system: string,
     userMessage: string,
+    maxTokens: number,
     callbacks: StreamCallbacks
   ): Promise<MessageResult> {
     let fullText = "";
@@ -94,7 +81,7 @@ export class GysomAIClient {
 
     const stream = await this.client.messages.create({
       model,
-      max_tokens: MAX_OUTPUT_TOKENS_PER_STAGE,
+      max_tokens: maxTokens,
       system,
       messages: [{ role: "user", content: userMessage }],
       stream: true,

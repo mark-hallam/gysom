@@ -70,8 +70,9 @@ export default function HomePage() {
           </h1>
           <p className="mx-auto mb-12 max-w-2xl text-lg text-gray-400">
             Stop writing sequential task lists no agent can run. GYSOM compiles your
-            idea into a parallel DAG, assigns agent roles, batches human decisions
-            upfront, and hands you copy-paste prompts. Ship faster.
+            idea into a parallel DAG with agent-first prompts — fewer tokens,
+            less human hand-holding, and agents that execute autonomously.
+            Less compute, less waste, faster shipping.
           </p>
 
           {/* Input form */}

@@ -16,8 +16,8 @@ export const PIPELINE_STAGE_COUNT = 6;
 
 /** Model identifiers for the Anthropic API */
 export const MODEL_IDS = {
-  opus46: "claude-opus-4-6-20251101",
-  opus45: "claude-opus-4-5-20251101",
+  opus46: "claude-opus-4-6",
+  opus45: "claude-opus-4-1",
   sonnet45: "claude-sonnet-4-5-20250929",
 } as const;
 
@@ -74,8 +74,18 @@ export const STAGE_NUMBERS = {
   "execution-plan": 6,
 } as const;
 
-/** Max tokens (output) per stage */
-export const MAX_OUTPUT_TOKENS_PER_STAGE = 4096;
+/** Default max tokens (output) per stage */
+export const MAX_OUTPUT_TOKENS_PER_STAGE = 16384;
+
+/** Per-stage output token limits (larger stages get more room) */
+export const STAGE_OUTPUT_TOKEN_LIMITS: Record<string, number> = {
+  "intent-extraction": 4096,
+  "dependency-analysis": 16384,
+  "agent-assignment": 16384,
+  "human-decision-id": 8192,
+  "prompt-generation": 32768,
+  "execution-plan": 16384,
+} as const;
 
 /** Project type display labels */
 export const PROJECT_TYPE_LABELS = {

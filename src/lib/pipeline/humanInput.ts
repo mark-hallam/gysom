@@ -13,7 +13,7 @@ import type {
   PipelineStageName,
 } from "@/lib/types";
 import { GysomAIClient } from "@/lib/ai/client";
-import { extractJSON, safeParseJSON } from "@/lib/utils/formatting";
+import { extractJSON, safeParseJSON, repairTruncatedJSON } from "@/lib/utils/formatting";
 
 const STAGE: PipelineStageName = "human-decision-id";
 
@@ -57,7 +57,13 @@ export async function identifyHumanInput(
   const result = await client.runStage(STAGE, userMessage, modelTier);
 
   const jsonStr = extractJSON(result.text);
-  const parsed = safeParseJSON<DecisionQueue>(jsonStr);
+  let parsed = safeParseJSON<DecisionQueue>(jsonStr);
+
+  // If initial parse fails, try repairing truncated JSON
+  if (!parsed) {
+    const repaired = repairTruncatedJSON(jsonStr);
+    parsed = safeParseJSON<DecisionQueue>(repaired);
+  }
 
   if (!parsed || !parsed.decisions || !Array.isArray(parsed.decisions)) {
     throw new Error(

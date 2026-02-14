@@ -71,14 +71,18 @@ Output ONLY valid JSON.`,
 
 Given all upstream pipeline data (manifest, DAG, agents, decisions) as JSON, generate execution prompts. Output a JSON object with:
 - prompts: Array of { id, agentRole, layer, prompt, dependencies, completionCriteria, expectedOutput, estimatedTokens, handoff }
-  - prompt: Complete, copy-paste ready prompt text for the agent. Include specific file paths, tech stack details, and verification steps.
-  - completionCriteria: Array of concrete checks (e.g., "npm run type-check passes")
-  - expectedOutput: What files/artifacts the agent should produce
-  - handoff: Instructions for the next agent in the pipeline
+  - prompt: A concise but complete execution directive (200-400 words max per prompt). Use bullet points, not prose. Include: goal, key files, tech constraints, verification command.
+  - completionCriteria: Array of 2-4 concrete checks (e.g., "npm run type-check passes")
+  - expectedOutput: Brief list of files/artifacts
+  - handoff: One sentence about what the next agent needs
+  - estimatedTokens: number
 
-Each prompt should be self-contained: an agent reading only that prompt should have enough context to execute.
-Include error handling guidance and fallback strategies in each prompt.
-Output ONLY valid JSON.`,
+CRITICAL CONSTRAINTS:
+- Keep each prompt field CONCISE. Use terse, directive language — not explanatory paragraphs.
+- Maximum 8 prompts total. Combine related work into single prompts.
+- Total JSON output must stay under 25000 characters.
+- Do NOT include full code snippets in prompts — just describe what to build.
+Output ONLY valid JSON, no markdown fences.`,
 
   "execution-plan": `You are an expert at creating comprehensive execution plans with parallel orchestration.
 

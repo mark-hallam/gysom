@@ -14,7 +14,7 @@ import type {
   PipelineStageName,
 } from "@/lib/types";
 import { GysomAIClient } from "@/lib/ai/client";
-import { extractJSON, safeParseJSON } from "@/lib/utils/formatting";
+import { extractJSON, safeParseJSON, repairTruncatedJSON } from "@/lib/utils/formatting";
 
 const STAGE: PipelineStageName = "prompt-generation";
 
@@ -80,7 +80,13 @@ export async function generatePrompts(
   const result = await client.runStage(STAGE, userMessage, modelTier);
 
   const jsonStr = extractJSON(result.text);
-  const parsed = safeParseJSON<{ prompts: ExecutionPrompt[] }>(jsonStr);
+  let parsed = safeParseJSON<{ prompts: ExecutionPrompt[] }>(jsonStr);
+
+  // If initial parse fails, try repairing truncated JSON
+  if (!parsed) {
+    const repaired = repairTruncatedJSON(jsonStr);
+    parsed = safeParseJSON<{ prompts: ExecutionPrompt[] }>(repaired);
+  }
 
   if (!parsed || !parsed.prompts || !Array.isArray(parsed.prompts)) {
     throw new Error(

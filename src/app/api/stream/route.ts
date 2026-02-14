@@ -1,4 +1,8 @@
 import { NextRequest } from "next/server";
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
+
 import { compileRequestSchema } from "@/lib/utils/validators";
 import { runPipeline } from "@/lib/pipeline";
 import {
@@ -28,6 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { description, modelTier } = parsed.data;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
@@ -36,7 +41,7 @@ export async function POST(request: NextRequest) {
           const { plan } = await runPipeline({
             rawInput: description,
             modelTier,
-            apiKey: process.env.ANTHROPIC_API_KEY,
+            apiKey,
             onProgress: (event: StreamEvent) => {
               controller.enqueue(encoder.encode(formatSSE(event)));
             },
