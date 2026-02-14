@@ -1,101 +1,107 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Header from "@/components/common/Header";
+import ProjectInput from "@/components/project/ProjectInput";
+import Card from "@/components/ui/Card";
+import { Zap, GitBranch, Users, FileText } from "lucide-react";
+import type { ProjectType, ModelTier } from "@/lib/types";
+
+const FEATURES = [
+  {
+    icon: Zap,
+    title: "6-Stage Pipeline",
+    description: "Intent extraction, dependency analysis, agent assignment, decision batching, prompt generation, execution planning.",
+  },
+  {
+    icon: GitBranch,
+    title: "DAG Visualization",
+    description: "Interactive dependency graph showing parallel workstreams and critical path analysis.",
+  },
+  {
+    icon: Users,
+    title: "Agent-First",
+    description: "Every output is optimized for autonomous agent execution, not human reading.",
+  },
+  {
+    icon: FileText,
+    title: "Ready-to-Execute",
+    description: "Copy-paste CLAUDE.md, AGENTS.md, and per-agent prompts directly into your toolchain.",
+  },
+];
+
+export default function HomePage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(data: {
+    description: string;
+    projectType: ProjectType;
+    modelTier: ModelTier;
+  }) {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Store the compilation request in sessionStorage so the compile page can pick it up
+      sessionStorage.setItem("gysom_compile_request", JSON.stringify(data));
+      router.push("/compile");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setIsLoading(false);
+    }
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <>
+      <Header />
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="mx-auto max-w-6xl px-4 pt-16 pb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+            Compile your project into an
+            <br />
+            <span className="text-blue-500">agent-first execution plan</span>
+          </h1>
+          <p className="mx-auto mb-12 max-w-2xl text-lg text-gray-400">
+            Describe your project in natural language. GYSOM transforms it into a
+            DAG-based orchestration plan with agent roles, execution prompts, and
+            parallel workstreams.
+          </p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+          {/* Input form */}
+          <div className="mx-auto max-w-2xl">
+            <Card className="text-left">
+              <ProjectInput onSubmit={handleSubmit} isLoading={isLoading} />
+              {error && (
+                <p className="mt-4 text-sm text-red-400">{error}</p>
+              )}
+            </Card>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="mx-auto max-w-6xl px-4 pb-20">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((feature) => (
+              <Card key={feature.title} className="text-center">
+                <feature.icon className="mx-auto mb-3 h-8 w-8 text-blue-500" />
+                <h3 className="mb-2 text-sm font-semibold text-white">
+                  {feature.title}
+                </h3>
+                <p className="text-xs text-gray-400">{feature.description}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+        GYSOM — Get Your Skates On Mate
       </footer>
-    </div>
+    </>
   );
 }
