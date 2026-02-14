@@ -63,29 +63,36 @@ export function downloadFile(
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
 /** Download all exports as individual files */
 export function downloadAllExports(plan: ExecutionPlan): void {
-  const exported = generateExport(plan);
+  try {
+    const exported = generateExport(plan);
 
-  downloadFile(exported.claudeMd, "CLAUDE.md");
+    downloadFile(exported.claudeMd, "CLAUDE.md");
 
-  setTimeout(() => {
-    downloadFile(exported.agentsMd, "AGENTS.md");
-  }, 200);
+    setTimeout(() => {
+      downloadFile(exported.agentsMd, "AGENTS.md");
+    }, 200);
 
-  setTimeout(() => {
-    downloadFile(exported.summary, "SUMMARY.md");
-  }, 400);
+    setTimeout(() => {
+      downloadFile(exported.summary, "SUMMARY.md");
+    }, 400);
 
-  setTimeout(() => {
-    downloadFile(
-      JSON.stringify(exported.executeJson, null, 2),
-      "execution-prompts.json",
-      "application/json"
-    );
-  }, 600);
+    setTimeout(() => {
+      downloadFile(
+        JSON.stringify(exported.executeJson, null, 2),
+        "execution-prompts.json",
+        "application/json"
+      );
+    }, 600);
+  } catch (err) {
+    console.error("[GYSOM export] Download failed:", err);
+  }
 }
