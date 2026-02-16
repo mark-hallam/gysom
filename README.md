@@ -1,44 +1,15 @@
-# GYSOM — Get Your Skates On Mate
+# GYSOM - Get Your Skates On Mate
 
-A "prompt compiler" web app at gysom.com that takes a user's natural language project description and compiles it into an agent-optimized execution plan — not a human todo list, but a machine-executable orchestration document with maximum parallelism, dependency graphs (DAGs), batched human input, and token-efficient agent handoffs.
+An agent-first prompt compilation methodology for autonomous AI coding agent execution.
 
-## Quick Start
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-```bash
-npm install
-npm run dev
-```
+**[gysom.com](https://gysom.com)**
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+## About
 
-## Tech Stack
-
-- **Framework**: Next.js 14 (App Router) + TypeScript (strict mode)
-- **Styling**: Tailwind CSS (dark mode)
-- **AI**: Claude API (Opus 4.6, Opus 4.5, Sonnet 4.5) with model routing
-- **Visualization**: ReactFlow for DAG graphs
-- **Database**: PostgreSQL + Prisma ORM
-- **Auth**: NextAuth.js (GitHub OAuth + email magic link)
-
-## 6-Stage Compilation Pipeline
-
-1. **Intent Extraction** — Parse project goals, constraints, tech stack
-2. **Dependency Analysis** — Generate DAG with cycle detection and parallelism scoring
-3. **Agent Assignment** — Match agent roles to tasks using template library
-4. **Human Input ID** — Batch decisions into prioritized questionnaire
-5. **Prompt Generation** — Create per-agent execution prompts
-6. **Execution Plan** — Assemble CLAUDE.md + AGENTS.md orchestration manifest
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in:
-
-```
-ANTHROPIC_API_KEY=sk-ant-...
-DATABASE_URL=postgresql://...
-NEXTAUTH_SECRET=...
-```
+GYSOM is a context engineering methodology that introduces prompt compilation as a new pattern for structuring AI coding agent execution. Rather than interacting with AI agents through ad hoc conversational prompts that degrade as project complexity grows, GYSOM compiles human intent and decisions into machine-executable session packages that an agent can run autonomously from start to finish. The methodology eliminates mid-execution bottlenecks through upfront decision harvesting, prevents context window exhaustion via session decomposition with explicit size budgets, and enables parallel execution through DAG-based dependency analysis.
 
 ## License
 
-MIT
+MIT License - Copyright 2026 Mark Hallam. See [LICENSE](LICENSE) for details.
