@@ -454,7 +454,16 @@ footer .footer-legal p {
     <div class="setup-instructions">
       <h3>Quick Setup</h3>
       <p><strong>Step 1:</strong> Copy the <strong>Personal Preferences</strong> text below into <code>Claude Desktop &rarr; Settings &rarr; Personal Preferences</code>. This triggers the core GYSOM behaviours in every conversation.</p>
-      <p style="margin-top:8px"><strong>Step 2:</strong> Copy the <strong>Global Instructions</strong> text below into <code>Claude Desktop &rarr; Settings &rarr; Cowork &rarr; Global Instructions (EDIT)</code>. This provides the full methodology specification as ambient context from Coworks output files ready for Code to get to work on.</p>
+      <p style="margin-top:8px"><strong>Step 2:</strong> Copy the <strong>Global Instructions</strong> text below into <code>Claude Desktop &rarr; Settings &rarr; Cowork &rarr; Global Instructions (EDIT)</code>. This provides the full methodology specification as ambient context from Cowork's output files ready for Code to get to work on.</p>
+    </div>
+
+    <div class="setup-instructions" style="margin-top:20px; background: var(--white); border: 2px solid var(--blue-light);">
+      <h3>How to Use</h3>
+      <p style="margin-bottom:12px">Once the two files above are in place, GYSOM activates automatically. Here's the workflow:</p>
+      <p><strong>1. Describe your project in Cowork.</strong> Open a new task window in Claude Cowork, point it at your working folder, and describe the entire project you want to build. Don't hold back &mdash; include every feature, integration, and requirement. GYSOM will harvest all decisions upfront and compile your description into session packages, a CLAUDE.md, an execution map, and all supporting files, saved directly into your working folder.</p>
+      <p style="margin-top:10px"><strong>2. Open Claude Code.</strong> Launch a Claude Code session pointing at the same project folder. The CLAUDE.md and session packages are already there waiting.</p>
+      <p style="margin-top:10px"><strong>3. Prompt it to begin.</strong> Tell Claude Code to execute the session packages. It will read the execution map, dispatch sessions as parallel subagents layer by layer, verify each one on completion, and cascade through the entire build autonomously. You watch the layers execute. No further input needed.</p>
+      <p style="margin-top:14px; color: var(--muted); font-size: 14px; font-family: var(--font-ui);"><em>That's it. One project description in Cowork. One prompt in Code. Full autonomous execution.</em></p>
     </div>
 
     <!-- Tabs -->
