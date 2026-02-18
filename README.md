@@ -1,10 +1,12 @@
 # GYSOM - Get Your Skates On Mate
 
+> **GYSOM has evolved into [DAC — Declarative Agent Compilation (v3)](https://markhallam.com.au).** The latest methodology, instructions, and documentation are now at [markhallam.com.au](https://markhallam.com.au). This repository remains as the GYSOM v2 archive.
+
 An agent-first prompt compilation methodology for autonomous AI coding agent execution.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**[gysom.com](https://gysom.com)**
+**[gysom.com](https://gysom.com)** | **[DAC v3 at markhallam.com.au](https://markhallam.com.au)**
 
 ## About
 
