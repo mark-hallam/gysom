@@ -73,6 +73,14 @@ class Validate(unittest.TestCase):
         text = MIN.replace("# opal t\n", "# opal t\nbudget.files: 1\n").replace("owns: a.py", "owns: *.py").replace("done: a.py", "done: a.py, b.py")
         self.assertTrue(any(e.startswith("E_BUDGET_FILES") for e in errs(text)))
 
+    def test_lockfile_warning(self):
+        prog, _ = opalc.parse(MIN.replace("1. WRITE a.py", "1. RUN npm install then WRITE a.py"))
+        self.assertEqual(opalc.validate(prog), [])
+        self.assertTrue(any(w.startswith("W_LOCKFILE") for w in prog.warnings))
+        prog, _ = opalc.parse(MIN.replace("1. WRITE a.py", "1. RUN npm install then WRITE a.py").replace("owns: a.py", "owns: a.py, package-lock.json"))
+        opalc.validate(prog)
+        self.assertEqual(prog.warnings, [])
+
     def test_cycle(self):
         text = MIN + "needs: b\n## task b\nneeds: a\nowns: b.py\ndo:\n1. WRITE b.py\nverify:\ntrue\ndone: b.py\n"
         self.assertIn("E_CYCLE: task dependency graph has a cycle", errs(text))
@@ -129,7 +137,7 @@ class PlanAndEmit(unittest.TestCase):
             last = (Path(d) / f"session-{len(plan['sessions'])}.md").read_text()
             for needle in ("Agent Contract", "Never ask", "## Decisions", "- framework: hono",
                            "## Task `foundation`", "CHECKPOINT", "git add package.json",
-                           "## Handoff — WRITE handoff-1.json"):
+                           "## Handoff — WRITE .opal/handoff-1.json", '"decisions_made"', "9. Orchestrate"):
                 self.assertIn(needle, first)
             self.assertNotIn("{{decide.", first)
             self.assertIn("## Prior state", last)

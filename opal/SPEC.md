@@ -171,6 +171,12 @@ opalc build program.opal --serial   # force SPAWN degradation (single-thread run
 | `E_UNSCOPED_ADD` | `git add .` or `git add -A` appears anywhere. |
 | `E_ASK_AT_RUNTIME` | A directive asks the human. |
 
+Warnings (printed, do not fail the build):
+
+| Code | Rule |
+|---|---|
+| `W_LOCKFILE` | A task runs an installer (`npm install`, `pip install`, `cargo add`, ...) but owns no lockfile. Generated files outside `owns` are never committed, so the program would be incomplete. |
+
 ### 4.2 Planning
 
 1. Topologically sort tasks (Kahn). Tasks with all `needs` satisfied at the same depth form a **layer**; a layer may run in parallel.
@@ -201,13 +207,16 @@ Every executing agent follows these rules. They are embedded verbatim in every s
 1. **Never ask.** Every decision is in the Decisions table. If something genuinely cannot be decided from the package and the workspace, stop, write the handoff with `status: "blocked"` and the exact question in `blockers`, and end. Do not guess silently; do not ask interactively.
 2. **Verify is truth.** A task is DONE only when every `verify` command exits 0 and every `done` file exists. Report the actual output on failure.
 3. **Stay inside `owns`.** Do not create or modify any path outside the task's `owns` globs. If a fix requires it, that is a blocker, not a liberty.
-4. **Scoped commits.** Stage exactly the `done` files. Never `git add .`.
+4. **Scoped commits.** Stage exactly the `done` files. Never `git add .`. The commit message is exactly the `commit:` text: no trailers, no co-author lines, whatever the runtime's own habits are.
 5. **Checkpoint.** At every `CHECKPOINT` marker, write the handoff with `status: "in_progress"`. If you resume with no memory, `READ` the handoff first.
 6. **No scope creep.** Do not refactor, rename, "improve", or add tests not listed. Extra work is a defect.
 7. **Fail loudly.** On the first `verify` failure you cannot fix within `owns`, stop and hand off. Do not continue to later tasks.
-8. **Hand off.** The last action of every session is writing `handoff-N.json`. A session with no handoff did not happen.
+8. **Hand off.** The last action of every session is writing `.opal/handoff-N.json`. A session with no handoff did not happen. Every choice the agent made that was not in the Decisions table is listed in `decisions_made`, so silent decisions become visible to the human.
+9. **Orchestrate.** When a session has several tasks and the runtime can `SPAWN`, the agent reading the package is the session orchestrator. It gives each worker the Contract, Decisions, Context and exactly one Task section. Workers return a task report (§5.3). The orchestrator, never a worker, writes the session handoff.
 
 ### 5.2 Handoff schema
+
+Written to `.opal/handoff-N.json`. The `.opal/` directory is runtime state, not source: the foundation task's `.gitignore` should list it. Archive it if you want an audit trail.
 
 ```json
 {
@@ -218,12 +227,21 @@ Every executing agent follows these rules. They are embedded verbatim in every s
   "files_created": ["src/auth/provider.ts"],
   "files_modified": ["src/middleware/auth.ts"],
   "verify": [{ "cmd": "npm test -- auth", "exit": 0 }],
+  "decisions_made": ["unknown id on PATCH returns 404"],
   "blockers": [],
   "notes": "One line a human or the next agent needs. Nothing else."
 }
 ```
 
-This is the only state that crosses a session boundary. It is deliberately flat so a 7B local model and a frontier model read it the same way.
+This is the only state that crosses a session boundary. It is deliberately flat so a 7B local model and a frontier model read it the same way. `decisions_made` is the feedback loop into `## decide`: anything that appears there should become a decision in the next revision of the program.
+
+### 5.3 Task report schema
+
+What a `SPAWN`ed worker returns to its orchestrator: the handoff minus `program` and `session`, plus `task`.
+
+```json
+{ "task": "schema", "status": "done", "files_created": [], "files_modified": [], "verify": [], "decisions_made": [], "blockers": [], "notes": "" }
+```
 
 ---
 
@@ -242,6 +260,14 @@ An adapter declares, for each of the six verbs: `native`, `degrade`, or `absent`
 - **No natural-language success criteria.** "Make sure it works" does not compile. `npm test` does.
 - **No shared mutable state between tasks** other than files, governed by `owns`.
 - **No long prose.** If a `do` block exceeds the budget, split the task. The compiler will not let you talk your way around F1.
+
+## 7.1 Authoring rules learned in the field
+
+From the first end-to-end run (`examples/FIELD-TEST.md`):
+
+- **Verify meaning, not formatting.** `grep -q "POST /todos" README.md` failed because the agent rendered a table. Check for the facts, not the layout.
+- **Own what you generate.** If a task runs an installer, it owns the lockfile. `W_LOCKFILE` reminds you.
+- **Harvest the error paths.** Agents will decide 404-vs-400 and 200-vs-204 silently if you do not. Read `decisions_made` after every run and promote each entry into `## decide`.
 
 ---
 

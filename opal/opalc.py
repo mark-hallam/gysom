@@ -19,6 +19,8 @@ HEADER_RE = re.compile(r"^# opal ([a-z][a-z0-9_-]*)\s*$")
 INTERP_RE = re.compile(r"\{\{decide\.([a-z][a-z0-9_-]*)\}\}")
 UNSCOPED_ADD_RE = re.compile(r"git\s+add\s+(\.|-A|--all)(\s|$)")
 ASK_RE = re.compile(r"\bASK\b|\bask the user\b|\bconfirm with\b", re.I)
+INSTALL_RE = re.compile(r"\b(npm|pnpm|yarn|bun|pip|poetry|uv|cargo|go)\s+(install|add|i|get)\b|\bnpm ci\b", re.I)
+LOCKFILES = ("package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb", "poetry.lock", "uv.lock", "Cargo.lock", "go.sum", "requirements.txt")
 REQUIRED_TASK_FIELDS = ("owns", "do", "verify", "done")
 
 
@@ -30,6 +32,7 @@ class Program:
         self.context = ""
         self.tasks: dict[str, dict] = {}
         self.finally_verify: list[str] = []
+        self.warnings: list[str] = []
 
 
 # ----------------------------------------------------------------- parsing
@@ -213,6 +216,8 @@ def validate(prog: Program) -> list[str]:
             errors.append(f"E_UNSCOPED_ADD: task `{tid}` uses `git add .`/`-A`; stage the done files")
         if ASK_RE.search(t["do"]):
             errors.append(f"E_ASK_AT_RUNTIME: task `{tid}` asks the human; move it to `## decide`")
+        if INSTALL_RE.search(t["do"]) and not any(fnmatch.fnmatch(lf, g) for lf in LOCKFILES for g in t["owns"]):
+            prog.warnings.append(f"W_LOCKFILE: task `{tid}` runs an installer but owns no lockfile; generated files outside owns are never committed")
 
     ids = list(prog.tasks)
     for i, a in enumerate(ids):
@@ -280,11 +285,12 @@ CONTRACT = """## Agent Contract (binding)
 1. Never ask. Every decision is in the Decisions table. If something cannot be decided from this package and the workspace, STOP, write the handoff with status "blocked" and the exact question in blockers, and end.
 2. Verify is truth. A task is DONE only when every verify command exits 0 and every done file exists. Report actual output on failure.
 3. Stay inside owns. Do not create or modify any path outside the task's owns globs.
-4. Scoped commits. Stage exactly the done files. Never `git add .`.
+4. Scoped commits. Stage exactly the done files. Never `git add .`. The commit message is exactly the one given: no trailers, no co-author lines.
 5. Checkpoint. At every CHECKPOINT marker, WRITE the handoff with status "in_progress". If you resume with no memory, READ the handoff first.
 6. No scope creep. Do not refactor, rename, improve, or add anything not listed.
 7. Fail loudly. On the first verify failure you cannot fix inside owns, stop and hand off.
-8. Hand off. Your last action is WRITE handoff-{n}.json. A session with no handoff did not happen.
+8. Hand off. Your last action is WRITE .opal/handoff-{n}.json. A session with no handoff did not happen. Every choice you made that is not in the Decisions table goes in decisions_made.
+9. Orchestrate. If this session has several tasks and you SPAWN workers, give each worker this Contract, the Decisions, the Context and exactly one Task section. Workers return a task report (same shape as the handoff, minus program/session). You, not they, WRITE the handoff.
 """
 
 
@@ -292,7 +298,7 @@ def _handoff_template(prog: Program, n: int, tasks: list[str]) -> str:
     return json.dumps({
         "program": prog.name, "session": n, "status": "done | in_progress | blocked | failed",
         "tasks_done": tasks, "files_created": [], "files_modified": [],
-        "verify": [{"cmd": "<command>", "exit": 0}], "blockers": [], "notes": "",
+        "verify": [{"cmd": "<command>", "exit": 0}], "decisions_made": [], "blockers": [], "notes": "",
     }, indent=2)
 
 
@@ -312,14 +318,14 @@ def emit_session(prog: Program, p: dict, s: dict, serial: bool) -> str:
     out += ["## Decisions (final — do not revisit)"] + [f"- {k}: {v}" for k, v in prog.decide.items()] + [""]
     out += ["## Context", prog.context, ""]
     if n > 1:
-        out += ["## Prior state", f"READ handoff-{n-1}.json before starting. Its tasks_done must include: {', '.join(preds) or 'none'}. If not, STOP with status blocked.", ""]
+        out += ["## Prior state", f"READ .opal/handoff-{n-1}.json before starting. Its tasks_done must include: {', '.join(preds) or 'none'}. If not, STOP with status blocked.", ""]
     for tid in s["tasks"]:
         t = prog.tasks[tid]
         out += [f"## Task `{tid}`", f"- owns: {', '.join(t['owns'])}", f"- needs: {', '.join(t['needs']) or 'none'}", "", "### Do"]
         for i, line in enumerate([l for l in t["do"].splitlines() if l.strip()], 1):
             out.append(line)
             if i % 3 == 0:
-                out.append(f"CHECKPOINT — WRITE handoff-{n}.json (status in_progress)")
+                out.append(f"CHECKPOINT — WRITE .opal/handoff-{n}.json (status in_progress)")
         out += ["", "### Verify (all must exit 0)", "```sh", *t["verify"], "```", "",
                 "### Done files", *[f"- {f}" for f in t["done"]], ""]
         if t["commit"]:
@@ -327,7 +333,7 @@ def emit_session(prog: Program, p: dict, s: dict, serial: bool) -> str:
     out += ["## Session verify", "```sh", *[f"test -e {f}" for f in s["files"]], "```", ""]
     if n == total and prog.finally_verify:
         out += ["## Finally (whole-program audit)", "```sh", *prog.finally_verify, *[f"test -e {f}" for f in p["manifest"]], "```", ""]
-    out += [f"## Handoff — WRITE handoff-{n}.json", "```json", _handoff_template(prog, n, s["tasks"]), "```"]
+    out += [f"## Handoff — WRITE .opal/handoff-{n}.json", "```json", _handoff_template(prog, n, s["tasks"]), "```"]
     return "\n".join(out) + "\n"
 
 
@@ -360,6 +366,8 @@ def main(argv: list[str]) -> int:
     outdir = Path(argv[argv.index("-o") + 1]) if "-o" in argv else Path("out")
     serial = "--serial" in argv
     prog, errors = compile_file(src)
+    for w in prog.warnings:
+        print(w, file=sys.stderr)
     for e in errors:
         print(e, file=sys.stderr)
     if errors:
