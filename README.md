@@ -20,6 +20,18 @@ v2 is based on feedback from a 34-session, 8-layer autonomous build executed ent
 - **Smaller Sessions + Checkpoint Resume** — Session target reduced from 15–25 files to 8–12 with checkpoint markers every 3–5 files for resumable execution after context compaction.
 - **File Manifest + Completion Audit** — Every session includes a numbered file manifest. Verification audits actual files against expected, catching missing files immediately.
 
+## OPAL — a programming language for AI agents
+
+[`opal/`](opal/) contains **OPAL (Optimum Provider-Agnostic Language)**, the formalisation of GYSOM session packages into a real language with a compiler. An OPAL program is strict Markdown: `decide` (every question closed before execution), `context`, DAG-linked `task`s with file ownership, shell `verify` blocks that define done, and a JSON handoff. `opalc` validates budgets, dependency cycles, file collisions, unscoped commits and runtime questions, then emits self-contained session packages that any agent on any model can execute.
+
+```sh
+python3 opal/opalc.py check opal/examples/todo-api.opal
+python3 opal/opalc.py build opal/examples/todo-api.opal -o out/
+python3 -m unittest opal/test_opalc.py
+```
+
+See [opal/SPEC.md](opal/SPEC.md) and [opal/runtimes/README.md](opal/runtimes/README.md).
+
 ## License
 
 MIT License - Copyright 2026 Mark Hallam. See [LICENSE](LICENSE) for details.
