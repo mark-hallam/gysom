@@ -1,10 +1,12 @@
 """Tests for the OPAL reference compiler. Run: python3 -m unittest opal/test_opalc.py"""
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-import opalc
+sys.path.insert(0, str(Path(__file__).parent))
+import opalc  # noqa: E402
 
 HERE = Path(__file__).parent
 
